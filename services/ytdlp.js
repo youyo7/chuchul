@@ -4,6 +4,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 const TEMP_DIR = path.resolve(process.env.TEMP_DIR || './temp');
+const YTDLP_COOKIE_FILE = ensureCookiesFile();
 const YTDLP_BIN = resolveBinaryPath(process.env.YTDLP_PATH, ['yt-dlp.exe', 'yt-dlp'], ['yt-dlp.yt-dlp']);
 const FFMPEG_BIN = resolveBinaryPath(process.env.FFMPEG_PATH, ['ffmpeg.exe', 'ffmpeg'], ['yt-dlp.ffmpeg', 'gyan.ffmpeg', 'ffmpeg.ffmpeg', 'btbn.ffmpeg']);
 
@@ -194,12 +195,12 @@ function runYtDlp(args, done) {
       return;
     }
 
-    done(new Error(`yt-dlp exited with code ${code}`), stdout, stderr);
+    done(normalizeYtDlpError(new Error(`yt-dlp exited with code ${code}`), stdout, stderr), stdout, stderr);
   });
 }
 
 function createYtDlpProcess(args, stdio) {
-  return spawn(YTDLP_BIN, args, {
+  return spawn(YTDLP_BIN, buildYtDlpArgs(args), {
     windowsHide: true,
     stdio,
     env: buildRuntimeEnv(),
@@ -228,6 +229,59 @@ function buildRuntimeEnv() {
   env.Path = mergedPath;
   env.PATH = mergedPath;
   return env;
+}
+
+function buildYtDlpArgs(args) {
+  const finalArgs = Array.isArray(args) ? [...args] : [];
+
+  if (YTDLP_COOKIE_FILE) {
+    finalArgs.unshift(YTDLP_COOKIE_FILE);
+    finalArgs.unshift('--cookies');
+  }
+
+  return finalArgs;
+}
+
+function normalizeYtDlpError(error, stdout, stderr) {
+  const combined = `${stderr || ''}\n${stdout || ''}`;
+
+  if (/confirm you'?re not a bot/i.test(combined) || /Sign in to confirm/i.test(combined)) {
+    return new Error(
+      'YouTube가 현재 Railway 서버를 봇으로 판단해 차단했습니다. 운영 환경에서는 yt-dlp 쿠키를 넣거나 다른 서버/VPS를 써야 합니다.'
+    );
+  }
+
+  return error;
+}
+
+function ensureCookiesFile() {
+  const rawValue = String(process.env.YTDLP_COOKIES || '').trim();
+  const base64Value = String(process.env.YTDLP_COOKIES_B64 || '').trim();
+  const source = base64Value ? decodeBase64(base64Value) : rawValue;
+
+  if (!source) {
+    return '';
+  }
+
+  try {
+    if (!fs.existsSync(TEMP_DIR)) {
+      fs.mkdirSync(TEMP_DIR, { recursive: true });
+    }
+
+    const cookiesPath = path.join(TEMP_DIR, 'yt-dlp-cookies.txt');
+    fs.writeFileSync(cookiesPath, source, 'utf8');
+    return cookiesPath;
+  } catch {
+    return '';
+  }
+}
+
+function decodeBase64(value) {
+  try {
+    return Buffer.from(value, 'base64').toString('utf8').trim();
+  } catch {
+    return '';
+  }
 }
 
 function resolveBinaryPath(overridePath, executableNames, packagePrefixes) {
