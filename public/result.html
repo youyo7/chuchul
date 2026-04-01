@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>결과 - chuchul</title>
+  <meta name="description" content="영상 다운로드와 대본 추출 결과를 확인하세요.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/" class="logo">chu<span>chul</span></a>
+    <div class="header-tools">
+      <a href="/" class="btn-back">새 링크 추출</a>
+      <div class="quota-badge" id="quotaBadge">오늘 남은 추출 횟수 확인 중...</div>
+      <div class="auth-shell">
+        <div class="auth-profile">
+          <img class="auth-avatar" id="authAvatar" alt="프로필" hidden>
+          <div class="auth-copy">
+            <strong id="authName">비로그인</strong>
+            <span id="authMeta">하루 2회 / Google 로그인 10회 / PRO 50회</span>
+          </div>
+        </div>
+        <div class="auth-buttons">
+          <div id="googleAuthButton"></div>
+          <button class="btn-sm" id="logoutBtn" type="button" hidden>로그아웃</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="loading-text" id="loadingText">다운로드를 준비하는 중...</p>
+  </div>
+
+  <main class="result-container">
+    <section class="result-intro">
+      <div class="result-intro-copy">
+        <span class="result-kicker">Download Workspace</span>
+        <h1 class="result-heading">다운로드와 대본 작업을 한 화면에서 끝내세요</h1>
+        <p class="result-subcopy">화질을 고르고 바로 저장한 뒤, 필요할 때만 대본을 불러와 복사하거나 TXT/SRT로 저장할 수 있습니다.</p>
+      </div>
+      <div class="result-statbar">
+        <div class="result-stat">
+          <span class="result-stat-label">플랫폼</span>
+          <strong id="heroPlatform">Loading</strong>
+        </div>
+        <div class="result-stat">
+          <span class="result-stat-label">길이</span>
+          <strong id="heroDuration">--:--</strong>
+        </div>
+        <div class="result-stat">
+          <span class="result-stat-label">대본</span>
+          <strong id="heroTranscript">대기 중</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="result-grid">
+      <section class="primary-column">
+        <div class="video-section">
+          <div class="video-player" id="videoPlayer"></div>
+          <div class="video-meta">
+            <div class="meta-topline">
+              <span class="meta-platform" id="platformLabel">Loading</span>
+              <span class="meta-duration" id="durationLabel"></span>
+            </div>
+            <h1 class="video-title" id="videoTitle">불러오는 중...</h1>
+            <p class="video-uploader" id="videoUploader"></p>
+          </div>
+        </div>
+
+        <div class="transcript-section">
+          <div class="transcript-header">
+            <div>
+              <h2>대본 / 자막</h2>
+              <p class="transcript-subtext" id="transcriptSubtext">필요할 때만 불러와서 비용을 절감합니다.</p>
+            </div>
+            <div class="transcript-actions">
+              <button class="btn-sm btn-accent" id="fetchTranscriptBtn" type="button">대본 추출</button>
+              <button class="btn-sm" id="copyBtn" type="button">전체 복사</button>
+              <button class="btn-sm" id="txtBtn" type="button">TXT 저장</button>
+              <button class="btn-sm" id="srtBtn" type="button">SRT 저장</button>
+            </div>
+          </div>
+          <div class="transcript-notice" id="transcriptNotice" hidden></div>
+          <div class="transcript-body empty" id="transcriptBody">대본 추출 버튼을 누르면 이 영역에 결과가 표시됩니다.</div>
+        </div>
+
+        <section class="coupang-section">
+          <h3>추천 상품 영역</h3>
+          <div id="coupangArea">
+            <div class="ad-block" style="min-height: 96px;">
+              <!-- Coupang Partners widget slot -->
+              쿠팡파트너스 광고 영역
+            </div>
+          </div>
+        </section>
+
+        <div class="ad-block ad-wide ad-bottom">
+          <!-- Google AdSense 728x90 slot -->
+          광고 영역
+        </div>
+      </section>
+
+      <aside class="download-panel">
+        <div class="panel-card panel-download">
+          <div class="panel-header">
+            <div>
+              <h3>다운로드 옵션</h3>
+              <p class="panel-subtext">총 5개 옵션만 간단하게 보여줍니다.</p>
+            </div>
+            <span class="panel-chip">Quick Save</span>
+          </div>
+          <div class="selection-preview">
+            <span class="selection-label">현재 선택</span>
+            <strong class="selection-quality" id="selectedQuality">최고화질</strong>
+            <span class="selection-size" id="selectedSize">용량 확인 중</span>
+          </div>
+          <div class="quality-list" id="qualityList"></div>
+          <button class="btn-download" id="downloadBtn" type="button">다운로드</button>
+          <p class="panel-note">파일은 전송 직후 서버에서 자동 삭제됩니다.</p>
+          <div class="tool-points">
+            <span>다운로드는 추출 횟수와 별개로 바로 저장됩니다.</span>
+            <span>대본은 필요할 때만 불러와 OpenAI 비용을 줄였습니다.</span>
+          </div>
+          <div class="upsell-card">
+            <span class="upsell-label">PRO</span>
+            <p>더 자주 작업해야 한다면 하루 50회까지 사용할 수 있습니다.</p>
+          </div>
+        </div>
+
+        <div class="panel-card ad-stack">
+          <div class="ad-block">광고 영역</div>
+          <div class="ad-block">광고 영역</div>
+          <div class="ad-block">광고 영역</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    비YouTube 대본은 비용 절감을 위해 필요할 때만 추출하며, 25MB 이하 범위까지만 제공합니다.
+  </footer>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/result.js"></script>
+</body>
+</html>
