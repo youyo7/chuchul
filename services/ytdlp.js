@@ -7,6 +7,7 @@ const TEMP_DIR = path.resolve(process.env.TEMP_DIR || './temp');
 const YTDLP_COOKIE_FILE = ensureCookiesFile();
 const YTDLP_BIN = resolveBinaryPath(process.env.YTDLP_PATH, ['yt-dlp.exe', 'yt-dlp'], ['yt-dlp.yt-dlp']);
 const FFMPEG_BIN = resolveBinaryPath(process.env.FFMPEG_PATH, ['ffmpeg.exe', 'ffmpeg'], ['yt-dlp.ffmpeg', 'gyan.ffmpeg', 'ffmpeg.ffmpeg', 'btbn.ffmpeg']);
+const YOUTUBE_EXTRACTOR_ARGS = buildYoutubeExtractorArgs();
 
 function getVideoInfo(url) {
   return new Promise((resolve, reject) => {
@@ -233,10 +234,16 @@ function buildRuntimeEnv() {
 
 function buildYtDlpArgs(args) {
   const finalArgs = Array.isArray(args) ? [...args] : [];
+  const targetUrl = finalArgs.find((value) => typeof value === 'string' && /^https?:\/\//i.test(value));
 
   if (YTDLP_COOKIE_FILE) {
     finalArgs.unshift(YTDLP_COOKIE_FILE);
     finalArgs.unshift('--cookies');
+  }
+
+  if (targetUrl && isYoutubeUrl(targetUrl) && YOUTUBE_EXTRACTOR_ARGS) {
+    finalArgs.unshift(YOUTUBE_EXTRACTOR_ARGS);
+    finalArgs.unshift('--extractor-args');
   }
 
   return finalArgs;
@@ -247,7 +254,7 @@ function normalizeYtDlpError(error, stdout, stderr) {
 
   if (/confirm you'?re not a bot/i.test(combined) || /Sign in to confirm/i.test(combined)) {
     return new Error(
-      'YouTube가 현재 Railway 서버를 봇으로 판단해 차단했습니다. 운영 환경에서는 yt-dlp 쿠키를 넣거나 다른 서버/VPS를 써야 합니다.'
+      'YouTube가 현재 Railway 서버를 봇으로 판단해 차단했습니다. 운영 환경에서는 yt-dlp 쿠키와 PO Token/Extractor Args를 넣거나 다른 서버/VPS를 써야 합니다.'
     );
   }
 
@@ -282,6 +289,41 @@ function decodeBase64(value) {
   } catch {
     return '';
   }
+}
+
+function buildYoutubeExtractorArgs() {
+  const rawArgs = String(process.env.YOUTUBE_EXTRACTOR_ARGS || '').trim();
+  if (rawArgs) {
+    return rawArgs;
+  }
+
+  const parts = [];
+  const playerClients = String(process.env.YOUTUBE_PLAYER_CLIENTS || '').trim();
+  const poToken = String(process.env.YOUTUBE_PO_TOKEN || '').trim();
+  const visitorData = String(process.env.YOUTUBE_VISITOR_DATA || '').trim();
+  const playerSkip = String(process.env.YOUTUBE_PLAYER_SKIP || '').trim();
+
+  if (playerClients) {
+    parts.push(`player_client=${playerClients}`);
+  }
+
+  if (poToken) {
+    parts.push(`po_token=${poToken}`);
+  }
+
+  if (visitorData) {
+    parts.push(`visitor_data=${visitorData}`);
+  }
+
+  if (playerSkip) {
+    parts.push(`player_skip=${playerSkip}`);
+  }
+
+  return parts.length ? `youtube:${parts.join(';')}` : '';
+}
+
+function isYoutubeUrl(url) {
+  return /(?:youtube\.com|youtu\.be)/i.test(String(url || ''));
 }
 
 function resolveBinaryPath(overridePath, executableNames, packagePrefixes) {
