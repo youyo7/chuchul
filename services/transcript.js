@@ -15,6 +15,7 @@ async function getYoutubeTranscript(url) {
 
   return new Promise((resolve) => {
     const args = [
+      '--ignore-config',
       '--write-auto-sub',
       '--sub-lang',
       'ko,en,ja,zh-Hans,zh-Hant,zh',
@@ -98,6 +99,7 @@ function downloadAudio(url, tmpId) {
   return new Promise((resolve, reject) => {
     const outputTemplate = path.join(TEMP_DIR, `${tmpId}.%(ext)s`);
     const args = [
+      '--ignore-config',
       '-f',
       'bestaudio',
       '-x',

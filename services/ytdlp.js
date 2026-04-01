@@ -9,7 +9,7 @@ const FFMPEG_BIN = resolveBinaryPath(process.env.FFMPEG_PATH, ['ffmpeg.exe', 'ff
 
 function getVideoInfo(url) {
   return new Promise((resolve, reject) => {
-    runYtDlp(['--dump-json', '--no-playlist', '--no-warnings', url], (error, stdout, stderr) => {
+    runYtDlp(['--ignore-config', '--dump-single-json', '--skip-download', '--no-playlist', '--no-warnings', url], (error, stdout, stderr) => {
       if (error) {
         reject(new Error(stderr || error.message || 'yt-dlp 실행에 실패했습니다.'));
         return;
@@ -103,6 +103,7 @@ function downloadFile(url, formatId, ext, quality) {
     const args =
       formatId === 'bestaudio'
         ? [
+            '--ignore-config',
             '-f',
             'bestaudio',
             '-x',
@@ -115,6 +116,7 @@ function downloadFile(url, formatId, ext, quality) {
             url,
           ]
         : [
+            '--ignore-config',
             '-f',
             buildVideoSelector(formatId, quality),
             '--merge-output-format',
